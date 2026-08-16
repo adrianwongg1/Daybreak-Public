@@ -1,5 +1,13 @@
 [build]
   command = "npm run build"
 
+[build.environment]
+  # This Next.js fork's own docs state a minimum Node.js version of 20.9
+  # (node_modules/next/dist/docs/01-app/01-getting-started/01-installation.md).
+  # Pinned explicitly since Netlify's unpinned default isn't guaranteed to
+  # satisfy that, and nothing else in this repo (.nvmrc, package.json
+  # engines) pins it either.
+  NODE_VERSION = "22"
+
 [[plugins]]
   package = "@netlify/plugin-nextjs"
