@@ -1,0 +1,370 @@
+@import "tailwindcss";
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Design system — modern, clean, light/dark. Inter (industry-standard UI
+   typeface) throughout; a warm amber "sunrise" accent (on-brand for
+   "Daybreak") separate from dedicated green `--color-success` and red
+   `--color-danger` values, so those meanings never collide the way a single
+   overloaded accent color used to. Only a handful of true primitives are
+   hand-authored per theme (bg/text/accent/danger) — everything else (the
+   neutral ramp, tinted accent/danger backgrounds, dividers) is derived via
+   color-mix() from those primitives, so it automatically adapts between
+   light and dark instead of needing a second full palette maintained by
+   hand. Theme switch is a `data-theme` attribute on <html>, set by
+   app/components/theme-toggle.tsx and a blocking inline script in
+   app/layout.tsx (avoids a flash of the wrong theme on load).
+   ══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --color-bg: #f7f3eb;
+  --color-text: #29251f;
+  --color-accent: #d97706;
+  --color-accent-600: #b45309;
+  --color-accent-700: #92400e;
+  --color-success: #15803d;
+  --color-danger: #dc2626;
+  --color-danger-700: #991b1b;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-bg: #191714;
+    --color-text: #f5efe5;
+    --color-accent: #fbbf24;
+    --color-accent-600: #f59e0b;
+    --color-accent-700: #fcd34d;
+    --color-success: #4ade80;
+    --color-danger: #f87171;
+    --color-danger-700: #ef4444;
+  }
+}
+
+:root[data-theme="dark"] {
+  --color-bg: #191714;
+  --color-text: #f5efe5;
+  --color-accent: #fbbf24;
+  --color-accent-600: #f59e0b;
+  --color-accent-700: #fcd34d;
+  --color-success: #4ade80;
+  --color-danger: #f87171;
+  --color-danger-700: #ef4444;
+}
+
+:root {
+  /* Derived — adapt automatically to whichever theme block above is active. */
+  --color-surface: color-mix(in srgb, var(--color-text) 4%, var(--color-bg));
+  --color-divider: color-mix(in srgb, var(--color-text) 12%, var(--color-bg));
+
+  --color-neutral-100: color-mix(in srgb, var(--color-text) 6%, var(--color-bg));
+  --color-neutral-200: color-mix(in srgb, var(--color-text) 12%, var(--color-bg));
+  --color-neutral-300: color-mix(in srgb, var(--color-text) 22%, var(--color-bg));
+  --color-neutral-400: color-mix(in srgb, var(--color-text) 36%, var(--color-bg));
+  --color-neutral-500: color-mix(in srgb, var(--color-text) 50%, var(--color-bg));
+  --color-neutral-600: color-mix(in srgb, var(--color-text) 64%, var(--color-bg));
+  --color-neutral-700: color-mix(in srgb, var(--color-text) 78%, var(--color-bg));
+  --color-neutral-800: color-mix(in srgb, var(--color-text) 90%, var(--color-bg));
+  --color-neutral-900: var(--color-text);
+
+  --color-accent-100: color-mix(in srgb, var(--color-accent) 14%, var(--color-bg));
+  --color-accent-800: color-mix(in srgb, var(--color-accent) 65%, var(--color-text));
+  --color-chat-user-bg: #9a3f28;
+  --color-chat-user-text: #fffaf5;
+  --color-chat-assistant-bg: color-mix(in srgb, var(--color-text) 7%, var(--color-bg));
+
+  --color-danger-100: color-mix(in srgb, var(--color-danger) 14%, var(--color-bg));
+
+  --font-heading: Georgia, Cambria, "Times New Roman", serif;
+  --font-heading-weight: 600;
+  --font-body: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 18px;
+
+  /* Fixed (not theme-derived) — a shadow is a shadow in both themes; a
+     color-mixed one would tint toward near-white text in dark mode and read
+     as a glow instead of a shadow. */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.10);
+  --shadow-lg: 0 24px 56px rgba(0, 0, 0, 0.22);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body { height: 100%; }
+html { color-scheme: light dark; }
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.55;
+  font-weight: 400;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  margin: 0 0 var(--space-2);
+}
+h1 { font-size: clamp(34px, 5vw, 52px); }
+h2 { font-size: 30px; }
+h3 { font-size: 23px; }
+h4 { font-size: 19px; }
+h5 { font-size: 16px; }
+h6 { font-family: var(--font-body); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 700; }
+p { margin: 0 0 var(--space-3); }
+a { color: var(--color-accent-700); text-underline-offset: 3px; }
+a:hover { color: var(--color-accent-600); }
+
+.text-muted { color: color-mix(in srgb, var(--color-text) 55%, transparent); }
+.spin { animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-shimmer {
+  background: linear-gradient(
+    100deg,
+    color-mix(in srgb, var(--color-text) 7%, var(--color-bg)) 20%,
+    color-mix(in srgb, var(--color-text) 15%, var(--color-bg)) 45%,
+    color-mix(in srgb, var(--color-text) 7%, var(--color-bg)) 70%
+  );
+  background-size: 200% 100%;
+  animation: loading-shimmer 1.35s ease-in-out infinite;
+}
+@keyframes loading-shimmer { from { background-position: 200% 0; } to { background-position: -100% 0; } }
+@media (prefers-reduced-motion: reduce) { .loading-shimmer { animation: none; } }
+
+/* Command recommendations have a deliberately compact, single-border chip.
+   The edit affordance is visually absent until a pointer/focus enters its
+   chip, rather than reserving a second visible button beside the command. */
+.command-suggestion {
+  position: relative;
+  display: inline-flex;
+}
+.command-suggestion-chip,
+.command-suggestion-add {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-divider);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+  font: 600 15px/1.2 var(--font-heading);
+}
+.command-suggestion-chip {
+  padding: 8px 14px;
+}
+.command-suggestion-chip:hover,
+.command-suggestion-chip:focus-visible,
+.command-suggestion-add:hover,
+.command-suggestion-add:focus-visible {
+  border-color: color-mix(in srgb, var(--color-text) 35%, var(--color-divider));
+  background: color-mix(in srgb, var(--color-text) 5%, transparent);
+}
+.command-suggestion-add {
+  width: 38px;
+  padding: 0;
+}
+.command-suggestion-edit {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  z-index: 1;
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--color-divider);
+  border-radius: 50%;
+  background: var(--color-bg);
+  color: var(--color-text);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease, background-color 0.12s ease;
+}
+.command-suggestion:hover .command-suggestion-edit,
+.command-suggestion:focus-within .command-suggestion-edit {
+  opacity: 1;
+  pointer-events: auto;
+}
+.command-suggestion-edit:hover,
+.command-suggestion-edit:focus-visible {
+  background: color-mix(in srgb, var(--color-text) 8%, var(--color-bg));
+}
+.command-suggestion-chip:disabled,
+.command-suggestion-add:disabled,
+.command-suggestion-edit:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+:focus { outline: none; }
+:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+::selection { background: color-mix(in srgb, var(--color-accent) 30%, transparent); }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--color-neutral-400); border-radius: var(--radius-sm); }
+
+/* Horizontal drag-scroll strips (e.g. the 24-hour weather row) where the
+   native scrollbar has no room to render cleanly below the content. */
+.scroll-x-bare { scrollbar-width: none; }
+.scroll-x-bare::-webkit-scrollbar { display: none; }
+
+/* — rules — */
+.hr {
+  height: 1px; border: 0; margin: var(--space-4) 0;
+  background: var(--color-divider);
+}
+
+/* — buttons — */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  cursor: pointer; text-decoration: none;
+  font-family: var(--font-heading); font-weight: 600;
+  font-size: 14px; line-height: 1.2; color: var(--color-text);
+  background: transparent; border: 1px solid transparent;
+  padding: var(--space-2) calc(var(--space-3) * 1.2);
+  border-radius: var(--radius-md);
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+.btn svg { display: block; }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-primary { background: var(--color-accent); color: #1a1206; }
+.btn-primary:hover { background: var(--color-accent-600); }
+.btn-primary:active { background: var(--color-accent-700); }
+.btn-secondary { border-color: var(--color-divider); }
+.btn-secondary:hover { background: color-mix(in srgb, var(--color-text) 6%, transparent); }
+.btn-secondary:active { background: color-mix(in srgb, var(--color-text) 12%, transparent); }
+.btn-ghost { color: var(--color-accent-700); padding-inline: var(--space-1); }
+.btn-ghost:hover { background: color-mix(in srgb, var(--color-accent) 10%, transparent); }
+.btn-ghost:active { background: color-mix(in srgb, var(--color-accent) 18%, transparent); }
+.btn-icon { width: 36px; height: 36px; padding: 0; border-radius: var(--radius-sm); }
+.btn-block { width: 100%; margin-top: var(--space-2); justify-content: flex-start; text-align: left; }
+
+/* — forms — */
+.field > label {
+  display: block; font-size: 12px; margin-bottom: 5px;
+  color: color-mix(in srgb, var(--color-text) 70%, transparent);
+}
+.input {
+  width: 100%; min-height: 36px; padding: 6px 10px; font: inherit;
+  font-size: 14px; color: var(--color-text); caret-color: var(--color-accent);
+  background: var(--color-surface);
+  border: 1px solid var(--color-divider); border-radius: var(--radius-sm);
+  transition: border-color 0.12s ease;
+}
+.input:hover { border-color: color-mix(in srgb, var(--color-text) 35%, var(--color-divider)); }
+.input:focus-visible { border-color: var(--color-accent); outline-offset: 0; }
+.input:disabled { opacity: 0.6; cursor: not-allowed; }
+textarea.input { min-height: 90px; resize: vertical; }
+
+.radio { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; }
+.radio input { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
+.radio .dot {
+  width: 16px; height: 16px; flex: none; border-radius: 50%;
+  border: 1.5px solid var(--color-divider);
+}
+.radio:hover .dot { border-color: var(--color-accent); }
+.radio input:checked + .dot {
+  border-color: var(--color-accent); background: var(--color-accent);
+  box-shadow: inset 0 0 0 4px var(--color-bg);
+}
+.radio input:focus-visible + .dot { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+
+.seg {
+  display: inline-flex; overflow: hidden;
+  border: 1px solid var(--color-divider); border-radius: var(--radius-sm);
+}
+.seg-opt {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 12px; font-size: 13px; cursor: pointer;
+}
+.seg-opt input { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
+.seg-opt + .seg-opt { border-left: 1px solid var(--color-divider); }
+.seg-opt:has(input:checked) { background: var(--color-accent); color: #1a1206; }
+.seg-opt:not(:has(input:checked)):hover { background: color-mix(in srgb, var(--color-text) 6%, transparent); }
+.seg-opt:has(input:focus-visible) { outline: 2px solid var(--color-accent); outline-offset: -2px; }
+
+/* — cards — */
+.card {
+  display: flex; flex-direction: column; gap: var(--space-2);
+  padding: var(--space-3); border-radius: var(--radius-md); background: var(--color-surface);
+}
+.card-kicker { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-accent-700); font-weight: 600; }
+.card-title { font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 17px; line-height: 1.2; }
+.card-body { margin: 0; font-size: 13px; opacity: 0.8; flex: 1; }
+.card-meta {
+  display: flex; align-items: center; gap: 6px; font-size: 11px;
+  color: color-mix(in srgb, var(--color-text) 50%, transparent);
+}
+.elev-sm { box-shadow: var(--shadow-sm); }
+.elev-md { box-shadow: var(--shadow-md); }
+.elev-lg { box-shadow: var(--shadow-lg); }
+
+/* — tags — */
+.tag {
+  display: inline-flex; align-items: center; font-size: 12px;
+  letter-spacing: 0.02em; padding: 3px 10px; font-weight: 500;
+  border-radius: var(--radius-sm);
+}
+.tag-accent { background: var(--color-accent-100); color: var(--color-accent-800); }
+.tag-neutral { background: var(--color-neutral-100); color: var(--color-neutral-800); }
+.tag-outline { border: 1px solid var(--color-accent); color: var(--color-accent-700); }
+.tag-danger { background: var(--color-danger-100); color: var(--color-danger-700); }
+
+/* — navigation — */
+.nav {
+  display: flex; align-items: center; gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-divider);
+}
+.nav-brand { font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 18px; margin-right: auto; }
+.nav a { color: inherit; text-decoration: none; font-size: 14px; }
+.nav a:hover, .nav a[aria-current='page'] { color: var(--color-accent-700); }
+
+/* — tables — */
+.table { width: 100%; border-collapse: collapse; font-size: 15px; }
+.table th {
+  text-align: left; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-text) 60%, transparent);
+  padding: var(--space-2); border-bottom: 1px solid var(--color-divider);
+}
+.table td { padding: var(--space-2); border-bottom: 1px solid var(--color-divider); }
+.table tbody tr:hover { background: color-mix(in srgb, var(--color-text) 4%, transparent); }
+
+/* — dialog — */
+.dialog-backdrop {
+  position: fixed; inset: 0; display: grid; place-items: center;
+  padding: var(--space-4); z-index: 50;
+  /* Always a black-based scrim regardless of theme — a modal backdrop
+     darkens the page in both light and dark mode, it doesn't invert. */
+  background: color-mix(in srgb, #000000 55%, transparent);
+}
+.dialog {
+  width: min(640px, 100%); display: flex; flex-direction: column; gap: var(--space-3);
+  padding: var(--space-4); border-radius: var(--radius-lg);
+  background: var(--color-surface); box-shadow: var(--shadow-lg);
+  border: 1px solid var(--color-divider);
+  max-height: 90vh; overflow-y: auto;
+}
+.dialog-title { font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 20px; }
+.dialog-body { font-size: 14px; opacity: 0.85; }
+.dialog-actions { display: flex; justify-content: flex-end; gap: var(--space-2); margin-top: var(--space-2); }

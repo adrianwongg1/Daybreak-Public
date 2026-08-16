@@ -1,0 +1,38 @@
+update decisions.md with today's date on these feature implementations
+
+- Today/home page changes
+  - make each section modular so that the user can customize the order in which they see their information.
+  - top right corner under the navigation bar there can be a drop down menu of “sections,” showing today’s calendar, weather, markets, news, where the user can click on it and take them directly to that section in the page.
+  - add a feature where a user can remove a section that is not wanted and be able to add the section back in the future, present options as to where and how to implement this
+- weather section changes
+  - fix outfit choice suggestion. it needs to be dynamic so that people who work night shift for example would be starting their day at a different time.
+  - allow for multiple cities to be added into the app
+    - instead of just check another city, make it so that the user can search for the city and then have a “+” button or “add” button that adds the searched city to the weather section
+- market section changes
+  - make a filtering system for the stock market tickers
+    - a-z, z-a for the symbols and company names
+    - filter by price, low-high or high-low
+    - filter by percentage change, low-high or high-low
+- command box changes
+  - fix reminders feature → ADD/EDIT/DELETE commands for the command box
+    - when a reminder is added/edited/deleted, this should be reflected in today’s calendar
+  - any update that is made to the calendar or reminders should auto refresh the calendar section. present me options to implement this feature. is there a webhook that listens for changes that triggers a refresh?
+- today’s calendar changes
+  - add a reminder section within this section.
+  - the right arrow in this section redirects the user to their google calendar, but it is not immediately obvious this does that. my idea is to add a hover textbox over the button that says “Click to go to Google Calendar.” present me with different options to compare for decision making
+  - implement a feature where the user can click on individual events and update the contents of the event themselves. such as the title, duration → have the date, time, am/pm, (drop down values, no text boxes) and implement the calculations of time.
+  - implement a feature to be able add locations to each event. should be a part of updating the contents of events
+- calendar tab changes
+  - make it so that you can filter the calendar by day/week/month
+  - when the user connects their google account/calendar to the app, i want to parse/read their google calendar for any events that are already in there. i want every parsed calendar event to be added to the calendar tab so the user can see.
+    - briefings will still be generated daily, however each day/calendar box should be clickable.
+      - if there is nothing scheduled for the day → show a default message with “nothing scheduled so far.” give other options on what can be displayed
+  - the front page of the calendar tab with all the days populated should display the events of the day instead of “briefing”
+  - when you click on a day, it currently shows calendar, weather and news.
+    - i want to add the market data as a section in there as well. save the company name, ticker, price, percentage change. only run this job or task monday-friday after stock market closes 1PM PST/4PM EST.
+    - i also want to redo what shows under weather. it should show the City, High and low for the day without outfit suggestion
+- news section changes
+  - put labels on the category of news that is generated on the page next to the article title
+    - this new labeling should also reflect for the calendar tab, individual day news part as well
+- settings page changes
+  - remove notification email section

@@ -1,0 +1,21 @@
+-- 0001_init.sql revoked EXECUTE on enqueue_briefing_job/claim_briefing_jobs
+-- "from public" only, intending them to be service_role-only (they're meant
+-- to be called by the job worker/cron, not end users). That didn't work:
+-- REVOKE ... FROM PUBLIC only removes the implicit/default grant baseline --
+-- it does not touch explicit grants already held by named roles. This
+-- Supabase project's own ALTER DEFAULT PRIVILEGES (set at provisioning,
+-- applies automatically to every function created in `public`) grants
+-- EXECUTE to `anon` and `authenticated` as separate, named-role ACL
+-- entries, so the original revoke was a no-op for those two roles.
+--
+-- Net effect until this migration: anyone holding the publishable/anon key
+-- (shipped in the browser bundle, see 0001_init.sql's RLS comment) could
+-- call POST /rest/v1/rpc/enqueue_briefing_job directly to queue a job for
+-- an arbitrary user_id, or POST /rest/v1/rpc/claim_briefing_jobs to claim
+-- and lock queued rows out from under the real worker. Confirmed via
+-- pg_proc.proacl: both functions carried anon=X and authenticated=X
+-- alongside service_role=X before this fix.
+--
+-- Safe to re-run.
+revoke execute on function public.enqueue_briefing_job(uuid, date, timestamptz) from anon, authenticated;
+revoke execute on function public.claim_briefing_jobs(integer, uuid) from anon, authenticated;

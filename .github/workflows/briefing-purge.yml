@@ -1,0 +1,30 @@
+name: Briefing purge
+
+# PRD 7.4: unpinned briefings older than 30 days are auto-purged. Runs once
+# a day (not every 15 minutes like briefing-cron.yml — purging isn't
+# time-sensitive) and reuses the same repo config as that workflow, so no
+# additional one-time setup is needed if briefing-cron.yml is already
+# configured:
+#   - Variables tab: APP_URL
+#   - Secrets tab: CRON_SECRET
+#
+# GitHub disables scheduled workflows automatically after 60 days with no
+# repository activity — a push or manual "Run workflow" re-enables it.
+
+on:
+  schedule:
+    - cron: "17 9 * * *"
+  workflow_dispatch:
+
+jobs:
+  purge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call briefing purge route
+        env:
+          APP_URL: ${{ vars.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          curl -fsS -X POST "$APP_URL/api/briefing/purge" \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            --max-time 90
