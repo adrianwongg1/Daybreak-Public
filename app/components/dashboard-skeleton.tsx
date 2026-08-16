@@ -48,6 +48,15 @@ export function DashboardSkeleton() {
 
       <section className="border-t border-(--color-divider) py-7 sm:py-8">
         <div className="flex items-center justify-between gap-4">
+          <h3 className="mb-0">Today&apos;s calendar</h3>
+        </div>
+        <div className="mt-5 flex flex-col gap-2">
+          <Shimmer className="h-11 rounded-(--radius-md)" />
+        </div>
+      </section>
+
+      <section className="border-t border-(--color-divider) py-7 sm:py-8">
+        <div className="flex items-center justify-between gap-4">
           <h3 className="mb-0">Weather</h3>
           <button type="button" className="btn btn-ghost text-xs" disabled>Edit</button>
         </div>
