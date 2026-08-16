@@ -4,13 +4,16 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { signOutAction } from "@/app/lib/auth-actions";
-import { ChevronDownIcon, TodayIcon } from "@/app/components/icons";
+import { CalendarIcon, ChevronDownIcon, TodayIcon } from "@/app/components/icons";
 import { ThemeToggle } from "@/app/components/theme-toggle";
 import { TODAY_SECTIONS, type SectionKey } from "@/app/lib/today-sections";
 
-// Today only (design handoff) — Settings has no direct nav tab, reached
-// solely via the profile menu below.
-const NAV_ITEMS = [{ href: "/today", label: "Today", Icon: TodayIcon }] as const;
+// Today and Calendar are the only direct nav tabs — Settings has no tab of
+// its own, reached solely via the profile menu below.
+const NAV_ITEMS = [
+  { href: "/today", label: "Today", Icon: TodayIcon },
+  { href: "/calendar", label: "Calendar", Icon: CalendarIcon },
+] as const;
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);

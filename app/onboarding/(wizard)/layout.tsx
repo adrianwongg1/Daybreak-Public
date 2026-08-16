@@ -18,7 +18,7 @@ export default async function OnboardingLayout({ children }: { children: React.R
     const supabase = getSupabaseServiceClient();
     const { data: user } = await supabase
       .from("users")
-      .select("briefing_time_weekday, briefing_time_weekend, timezone, home_location, onboarding_last_step")
+      .select("briefing_time_weekday, briefing_time_weekend, timezone, home_location, display_name, onboarding_last_step")
       .eq("id", userId)
       .single();
 

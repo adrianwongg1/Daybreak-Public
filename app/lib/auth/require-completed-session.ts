@@ -17,7 +17,7 @@ export async function requireCompletedSession() {
   const userId = data.user.id;
   const { data: user } = await getSupabaseServiceClient()
     .from("users")
-    .select("onboarding_completed_at, onboarding_last_step")
+    .select("display_name, onboarding_completed_at, onboarding_last_step")
     .eq("id", userId)
     .single();
 
@@ -25,5 +25,5 @@ export async function requireCompletedSession() {
     redirect(getResumeHref((user?.onboarding_last_step as OnboardingStepId | null) ?? null));
   }
 
-  return { session: { user: data.user }, userId };
+  return { session: { user: data.user }, userId, displayName: user?.display_name ?? null };
 }

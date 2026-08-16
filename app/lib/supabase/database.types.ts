@@ -114,6 +114,53 @@ export type Database = {
           },
         ]
       }
+      calendar_events: {
+        Row: {
+          all_day: boolean
+          created_at: string
+          description: string | null
+          end_time: string | null
+          event_date: string
+          id: string
+          location: string | null
+          start_time: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          all_day?: boolean
+          created_at?: string
+          description?: string | null
+          end_time?: string | null
+          event_date: string
+          id?: string
+          location?: string | null
+          start_time?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          all_day?: boolean
+          created_at?: string
+          description?: string | null
+          end_time?: string | null
+          event_date?: string
+          id?: string
+          location?: string | null
+          start_time?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       commands_log: {
         Row: {
           created_at: string
@@ -326,6 +373,7 @@ export type Database = {
           briefing_time_weekday: string
           briefing_time_weekend: string | null
           created_at: string
+          display_name: string | null
           email: string
           home_location: string | null
           id: string
@@ -337,6 +385,7 @@ export type Database = {
           briefing_time_weekday?: string
           briefing_time_weekend?: string | null
           created_at?: string
+          display_name?: string | null
           email: string
           home_location?: string | null
           id: string
@@ -348,6 +397,7 @@ export type Database = {
           briefing_time_weekday?: string
           briefing_time_weekend?: string | null
           created_at?: string
+          display_name?: string | null
           email?: string
           home_location?: string | null
           id?: string

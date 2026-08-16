@@ -1,3 +1,4 @@
+import { CalendarSection } from "@/app/(shell)/today/calendar-section";
 import { CommandBar } from "@/app/(shell)/today/command-bar";
 import { HashScrollOnLoad } from "@/app/(shell)/today/hash-scroll-on-load";
 import { MarketSection } from "@/app/(shell)/today/market-section";
@@ -21,14 +22,14 @@ export default async function TodayPage({
   let failed = true;
 
   try {
-    const { session, userId } = await timing.measure("auth_ms", () => requireCompletedSession());
+    const { session, userId, displayName } = await timing.measure("auth_ms", () => requireCompletedSession());
 
     const { prefill } = await searchParams;
     const dashboard = await getTodayDashboardViewModel(userId);
     timing.record("dashboard_db_ms", dashboard.timings.dashboardDbMs);
     timing.record("briefing_read_ms", dashboard.timings.briefingReadMs);
 
-    const firstName = session.user?.email?.split("@")[0] || "there";
+    const firstName = displayName?.trim().split(/\s+/)[0] || session.user?.email?.split("@")[0] || "there";
     const kicker = new Intl.DateTimeFormat("en-US", {
       timeZone: dashboard.timezone,
       weekday: "long",
@@ -45,6 +46,7 @@ export default async function TodayPage({
     const sectionsByKey: Record<SectionKey, React.ReactNode> | null = briefing
       ? {
           reminders: <RemindersSection id="section-reminders" reminders={dashboard.reminders} timeZone={dashboard.timezone} />,
+          calendar: <CalendarSection id="section-calendar" events={dashboard.calendarEvents} today={dashboard.today} />,
           weather: (
             <WeatherSection
               id="section-weather"

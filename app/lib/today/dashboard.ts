@@ -1,5 +1,7 @@
 import type { Briefing, MarketQuote } from "@/app/lib/briefing/types";
 import { todayInTimeZone } from "@/app/lib/briefing/date";
+import { listEventsForDate } from "@/app/lib/calendar/events";
+import type { CalendarEvent } from "@/app/lib/calendar/types";
 import { listOpenReminders, type Reminder } from "@/app/lib/commands/reminders";
 import { parseSavedCities, type SavedCity } from "@/app/lib/briefing/sources/weather";
 import { getSupabaseServiceClient } from "@/app/lib/supabase/server";
@@ -14,6 +16,7 @@ export interface TodayDashboardViewModel {
   marketTickers: string[];
   commandSuggestions: string[];
   reminders: Reminder[];
+  calendarEvents: CalendarEvent[];
   savedCities: SavedCity[];
   briefing: (Briefing & { generatedAt: string }) | null;
   marketQuotes: MarketQuote[] | null;
@@ -59,13 +62,14 @@ export async function getTodayDashboardViewModel(userId: string): Promise<TodayD
 
   const today = todayInTimeZone(user.timezone);
   const briefingStartedAt = performance.now();
-  const [preferencesResult, reminders, briefingResult] = await Promise.all([
+  const [preferencesResult, reminders, calendarEvents, briefingResult] = await Promise.all([
     supabase
       .from("preferences")
       .select("market_tickers, saved_cities, section_order, command_suggestions")
       .eq("user_id", userId)
       .maybeSingle(),
     listOpenReminders(userId),
+    listEventsForDate(userId, today),
     supabase
       .from("briefings")
       .select("date, weather_json, outfit_suggestion, market_json, news_json, saved_cities_weather_json, generated_at")
@@ -117,6 +121,7 @@ export async function getTodayDashboardViewModel(userId: string): Promise<TodayD
     marketTickers,
     commandSuggestions: commandSuggestionsForDisplay(preferences?.command_suggestions),
     reminders,
+    calendarEvents,
     savedCities: parseSavedCities(preferences?.saved_cities),
     briefing,
     marketQuotes: marketQuotes && marketQuotes.length > 0 ? marketQuotes : null,

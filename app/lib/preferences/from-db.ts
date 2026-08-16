@@ -6,7 +6,7 @@ function toHHMM(time: string): string {
   return time.slice(0, 5);
 }
 
-type UserScheduleRow = Pick<Tables<"users">, "briefing_time_weekday" | "briefing_time_weekend" | "timezone" | "home_location">;
+type UserScheduleRow = Pick<Tables<"users">, "briefing_time_weekday" | "briefing_time_weekend" | "timezone" | "home_location" | "display_name">;
 type PreferencesRow = Pick<
   Tables<"preferences">,
   "news_topics" | "market_tickers" | "style_preference" | "cold_tolerance"
@@ -25,6 +25,7 @@ type PreferencesRow = Pick<
  */
 export function preferencesFromRows(user: UserScheduleRow, preferences: PreferencesRow | null): DaybreakPreferences {
   return {
+    displayName: user.display_name ?? "",
     newsTopics: preferences?.news_topics?.length ? preferences.news_topics : DEFAULT_PREFERENCES.newsTopics,
     marketTickers: preferences?.market_tickers?.length ? preferences.market_tickers : DEFAULT_PREFERENCES.marketTickers,
     schedule: {

@@ -4,6 +4,7 @@
 // editor.
 export const TODAY_SECTIONS = [
   { key: "reminders", label: "Reminders" },
+  { key: "calendar", label: "Calendar" },
   { key: "weather", label: "Weather" },
   { key: "markets", label: "Markets" },
   { key: "news", label: "News" },

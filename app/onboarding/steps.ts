@@ -13,9 +13,10 @@ export interface OnboardingStepConfig {
 // standalone page outside the wizard's layout/progress bar, not step 1 of
 // it (see app/onboarding/provider/page.tsx).
 export const ONBOARDING_STEPS: OnboardingStepConfig[] = [
-  { id: "schedule", href: "/onboarding/schedule", label: "Briefing schedule", percent: 25 },
-  { id: "topics", href: "/onboarding/topics", label: "Topics & tickers", percent: 50 },
-  { id: "location", href: "/onboarding/location", label: "Location & outfit", percent: 75 },
+  { id: "name", href: "/onboarding/name", label: "Your name", percent: 20 },
+  { id: "schedule", href: "/onboarding/schedule", label: "Briefing schedule", percent: 40 },
+  { id: "topics", href: "/onboarding/topics", label: "Topics & tickers", percent: 60 },
+  { id: "location", href: "/onboarding/location", label: "Location & outfit", percent: 80 },
   { id: "done", href: "/onboarding/done", label: "Done", percent: 100 },
 ];
 

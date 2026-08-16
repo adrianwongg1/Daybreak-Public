@@ -21,6 +21,19 @@ async function setOnboardingStep(userId: string, step: OnboardingStepId): Promis
   if (error) throw error;
 }
 
+export async function saveNameStep(displayName: string): Promise<void> {
+  const userId = await getCurrentUserId();
+  const supabase = getSupabaseServiceClient();
+  const normalized = displayName.trim();
+  if (!normalized) throw new Error("Name is required");
+
+  const { error } = await supabase
+    .from("users")
+    .update({ display_name: normalized, onboarding_last_step: "name" })
+    .eq("id", userId);
+  if (error) throw error;
+}
+
 export async function saveScheduleStep(schedule: BriefingSchedule): Promise<void> {
   const userId = await getCurrentUserId();
   const supabase = getSupabaseServiceClient();

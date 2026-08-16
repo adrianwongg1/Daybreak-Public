@@ -5,10 +5,11 @@ import { parseSectionOrder } from "@/app/lib/today-sections";
 
 /** Fetches personal navigation details without holding up the page skeleton. */
 export async function ShellNavigation() {
-  const { session, userId } = await requireCompletedSession();
+  const { session, userId, displayName } = await requireCompletedSession();
 
   const supabase = getSupabaseServiceClient();
   const { data: preferences } = await supabase.from("preferences").select("section_order").eq("user_id", userId).maybeSingle();
 
-  return <NavShell userName={session?.user?.email ?? "Account"} sectionOrder={parseSectionOrder(preferences?.section_order)} />;
+  const userName = displayName?.trim() || session?.user?.email?.split("@")[0] || "Account";
+  return <NavShell userName={userName} sectionOrder={parseSectionOrder(preferences?.section_order)} />;
 }

@@ -6,6 +6,7 @@ export interface BriefingSchedule {
 }
 
 export interface DaybreakPreferences {
+  displayName: string;
   newsTopics: string[];
   marketTickers: string[];
   schedule: BriefingSchedule;
@@ -17,7 +18,7 @@ export interface DaybreakPreferences {
 // Sign-in ("/login") isn't tracked here or counted as a wizard step — it's
 // a standalone page outside app/onboarding/(wizard)/, and its completion is
 // real session existence via Supabase Auth, not local state.
-export type OnboardingStepId = "schedule" | "topics" | "location" | "done";
+export type OnboardingStepId = "name" | "schedule" | "topics" | "location" | "done";
 
 export interface OnboardingState {
   lastCompletedStep: OnboardingStepId | null;
@@ -61,6 +62,7 @@ export const COLD_TOLERANCE_OPTIONS = [
 ] as const;
 
 export const DEFAULT_PREFERENCES: DaybreakPreferences = {
+  displayName: "",
   newsTopics: ["World", "Technology", "Business"],
   marketTickers: ["SPY", "AAPL", "BTC-USD"],
   schedule: {

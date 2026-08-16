@@ -18,7 +18,7 @@ function SectionHeading({ title, editHref }: { title: string; editHref: string }
   );
 }
 
-// Schedule/location stay read-only-with-an-Edit-link (real editing
+// Name/schedule/location stay read-only-with-an-Edit-link (real editing
 // happens on the matching onboarding step, via ?from=settings — see
 // app/onboarding/use-step-nav.ts). Topics is the one section that edits in
 // place: the design wires its add/remove chips to real state directly (no
@@ -66,6 +66,14 @@ export function SettingsPreferences() {
 
   return (
     <div>
+      <SectionHeading title="Name" editHref="/onboarding/name?from=settings" />
+      <div className="field">
+        <label>Display name</label>
+        <input className="input" value={preferences.displayName || "Not set"} readOnly />
+      </div>
+
+      <hr className="hr" style={{ margin: "28px 0" }} />
+
       <SectionHeading title="Briefing schedule" editHref="/onboarding/schedule?from=settings" />
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
         <div className="field">

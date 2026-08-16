@@ -17,7 +17,7 @@ export default async function SettingsPage() {
     const [userRow, preferencesRow] = await Promise.all([
       supabase
         .from("users")
-        .select("briefing_time_weekday, briefing_time_weekend, timezone, home_location")
+        .select("briefing_time_weekday, briefing_time_weekend, timezone, home_location, display_name")
         .eq("id", userId)
         .single(),
       supabase
