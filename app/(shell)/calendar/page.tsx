@@ -30,22 +30,22 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
 
   return (
     <div>
-      <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-        <h1 style={{ margin: 0 }}>{formatMonthLabel(monthKey)}</h1>
-        <div style={{ display: "flex", gap: 6 }}>
-          {canGoPrev ? (
-            <Link href={`/calendar?month=${prevMonthKey}`} className="btn btn-secondary" aria-label="Previous month" style={{ padding: "6px 10px" }}>
-              <ChevronLeftIcon size={16} />
-            </Link>
-          ) : (
-            <button type="button" className="btn btn-secondary" disabled aria-label="Previous month" style={{ padding: "6px 10px" }}>
-              <ChevronLeftIcon size={16} />
-            </button>
-          )}
-          <Link href={`/calendar?month=${nextMonthKey}`} className="btn btn-secondary" aria-label="Next month" style={{ padding: "6px 10px" }}>
-            <ChevronRightIcon size={16} />
+      <header style={{ display: "grid", gridTemplateColumns: "auto 1fr auto", alignItems: "center", gap: 12, marginBottom: 20 }}>
+        {canGoPrev ? (
+          <Link href={`/calendar?month=${prevMonthKey}`} className="btn btn-secondary" aria-label="Previous month" style={{ padding: "6px 10px", justifySelf: "start" }}>
+            <ChevronLeftIcon size={16} />
           </Link>
-        </div>
+        ) : (
+          <button type="button" className="btn btn-secondary" disabled aria-label="Previous month" style={{ padding: "6px 10px", justifySelf: "start" }}>
+            <ChevronLeftIcon size={16} />
+          </button>
+        )}
+
+        <h1 style={{ margin: 0, textAlign: "center" }}>{formatMonthLabel(monthKey)}</h1>
+
+        <Link href={`/calendar?month=${nextMonthKey}`} className="btn btn-secondary" aria-label="Next month" style={{ padding: "6px 10px", justifySelf: "end" }}>
+          <ChevronRightIcon size={16} />
+        </Link>
       </header>
 
       <CalendarGrid monthKey={monthKey} today={today} events={events} />
