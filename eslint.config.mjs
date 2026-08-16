@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Local artifacts from running `netlify build`/`netlify deploy --build`
+    // directly (already gitignored, but eslint doesn't consult .gitignore).
+    ".netlify/**",
   ]),
 ]);
 
