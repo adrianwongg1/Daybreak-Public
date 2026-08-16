@@ -28,6 +28,13 @@ export function useStepNav(stepId: OnboardingStepId) {
       await persist();
       completeStep(stepId);
       router.push(isEditing ? "/settings" : getNextStepHref(stepId));
+      // The nav shell (NavShell's userName) is a separate Server Component
+      // fetch under the (shell) layout — a plain router.push reuses Next's
+      // cached copy of it, so e.g. editing your name from Settings landed
+      // back on Settings with the new name in the form but the old one
+      // still showing in the nav until the next hard navigation. Force it
+      // to refetch too.
+      router.refresh();
     } catch (err) {
       if (err instanceof Error && err.message === "Unauthorized") {
         router.push("/login");
