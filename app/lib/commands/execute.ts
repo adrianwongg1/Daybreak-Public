@@ -1,8 +1,18 @@
+import { todayInTimeZone } from "@/app/lib/briefing/date";
+import { createCalendarEvent, deleteCalendarEvent, listUpcomingEvents, updateCalendarEvent } from "@/app/lib/calendar/events";
+import { formatEventDateLabel, formatEventTime } from "@/app/lib/calendar/format";
+import type { CalendarEvent, CalendarEventInput } from "@/app/lib/calendar/types";
 import { getCommandLogRow, logCommand, updateCommandStatus } from "@/app/lib/commands/log";
 import { chatWithGemini, parseCommand } from "@/app/lib/commands/parse";
 import { createReminder, deleteReminder, listOpenReminders, updateReminder } from "@/app/lib/commands/reminders";
 import { classifyIntent } from "@/app/lib/commands/risk";
-import { formatInstantLabel, localNaiveToUtcDate, matchRemindersByReference } from "@/app/lib/commands/resolve";
+import {
+  formatEventLabel,
+  formatInstantLabel,
+  localNaiveToUtcDate,
+  matchEventsByReference,
+  matchRemindersByReference,
+} from "@/app/lib/commands/resolve";
 import type { CommandResponse, ParsedCommand } from "@/app/lib/commands/types";
 
 function nowLocalNaiveIso(timeZone: string): string {
@@ -150,6 +160,126 @@ async function handleEditReminder(
   };
 }
 
+/** "on Monday, August 17, 12:00 PM – 2:00 PM" style suffix, covering every combination of all-day/start-only/start-and-end that a parsed or freshly-created event might have. */
+function formatEventWhenSuffix(event: CalendarEvent): string {
+  const dateLabel = formatEventDateLabel(event.eventDate);
+  if (event.allDay || !event.startTime) return ` on ${dateLabel}`;
+  if (event.endTime) return ` on ${dateLabel}, ${formatEventTime(event.startTime)} – ${formatEventTime(event.endTime)}`;
+  return ` on ${dateLabel} at ${formatEventTime(event.startTime)}`;
+}
+
+async function handleCreateCalendarEvent(
+  userId: string,
+  parsed: ParsedCommand,
+  today: string
+): Promise<{ status: "auto_executed" | "rejected"; message: string }> {
+  if (!parsed.eventTitle) {
+    return {
+      status: "rejected",
+      message: 'I couldn\'t tell what the event is — try "add lunch with Sam at noon" or "schedule a dentist appointment tomorrow at 3pm."',
+    };
+  }
+
+  const allDay = parsed.eventAllDay ?? false;
+  const event = await createCalendarEvent(userId, {
+    title: parsed.eventTitle,
+    eventDate: parsed.eventDate || today,
+    startTime: allDay ? null : parsed.eventStartTime ?? null,
+    endTime: allDay ? null : parsed.eventEndTime ?? null,
+    allDay,
+    location: parsed.eventLocation ?? null,
+    description: null,
+  });
+  return { status: "auto_executed", message: `Event added: "${event.title}"${formatEventWhenSuffix(event)}.` };
+}
+
+/** Actually deletes the event — shared by the single-match auto-execute path and the multi-match disambiguation-pick path. */
+async function performDeleteCalendarEvent(userId: string, eventId: string, eventTitle: string): Promise<{ success: boolean; message: string }> {
+  await deleteCalendarEvent(userId, eventId);
+  return { success: true, message: `Deleted event: "${eventTitle}".` };
+}
+
+/** Same "single match acts immediately, only genuine ambiguity needs a picker" shape as handleDeleteReminder, scoped to today's-and-future events only (see listUpcomingEvents). */
+async function handleDeleteCalendarEvent(
+  userId: string,
+  parsed: ParsedCommand,
+  today: string
+): Promise<{ status: "auto_executed" | "pending" | "rejected"; message: string; disambiguationOptions?: { id: string; label: string }[] }> {
+  if (!parsed.eventReference) {
+    return { status: "rejected", message: 'I need to know which event to delete — try "delete my lunch event."' };
+  }
+
+  const events = await listUpcomingEvents(userId, today);
+  const matches = matchEventsByReference(events, parsed.eventReference);
+  if (matches.length === 0) {
+    return { status: "rejected", message: `I couldn't find an upcoming event matching "${parsed.eventReference}".` };
+  }
+
+  if (matches.length === 1) {
+    const outcome = await performDeleteCalendarEvent(userId, matches[0].id, matches[0].title);
+    return { status: outcome.success ? "auto_executed" : "rejected", message: outcome.message };
+  }
+
+  return {
+    status: "pending",
+    message: `A few events match "${parsed.eventReference}" — which one do you want to delete? This can't be undone.`,
+    disambiguationOptions: matches.map((event) => ({ id: event.id, label: `Delete "${formatEventLabel(event)}"` })),
+  };
+}
+
+/** Actually updates the event — shared by the single-match auto-execute path and the multi-match disambiguation-pick path. Only the provided newEvent* fields change; everything else on `current` is left as-is. */
+async function performEditCalendarEvent(
+  userId: string,
+  eventId: string,
+  current: CalendarEvent,
+  parsed: ParsedCommand
+): Promise<{ success: boolean; message: string }> {
+  const patch: Partial<CalendarEventInput> = {};
+  if (parsed.newEventTitle !== undefined) patch.title = parsed.newEventTitle;
+  if (parsed.newEventDate !== undefined) patch.eventDate = parsed.newEventDate;
+  if (parsed.newEventStartTime !== undefined) patch.startTime = parsed.newEventStartTime;
+  if (parsed.newEventEndTime !== undefined) patch.endTime = parsed.newEventEndTime;
+  if (parsed.newEventLocation !== undefined) patch.location = parsed.newEventLocation;
+
+  await updateCalendarEvent(userId, eventId, patch);
+  const updated: CalendarEvent = { ...current, ...patch };
+  return { success: true, message: `Updated event: "${updated.title}"${formatEventWhenSuffix(updated)}.` };
+}
+
+/** Same "single match acts immediately, only genuine ambiguity needs a picker" shape as handleEditReminder. Also rejects up front when the command gave nothing to actually change. */
+async function handleEditCalendarEvent(
+  userId: string,
+  parsed: ParsedCommand,
+  today: string
+): Promise<{ status: "auto_executed" | "pending" | "rejected"; message: string; disambiguationOptions?: { id: string; label: string }[] }> {
+  if (!parsed.eventReference) {
+    return {
+      status: "rejected",
+      message: 'I need to know which event to edit — try "move my lunch event to 1pm" or "change my dentist appointment to Friday."',
+    };
+  }
+  if (!parsed.newEventTitle && !parsed.newEventDate && !parsed.newEventStartTime && !parsed.newEventEndTime && !parsed.newEventLocation) {
+    return { status: "rejected", message: "I need something to change it to — a new time, date, title, or location." };
+  }
+
+  const events = await listUpcomingEvents(userId, today);
+  const matches = matchEventsByReference(events, parsed.eventReference);
+  if (matches.length === 0) {
+    return { status: "rejected", message: `I couldn't find an upcoming event matching "${parsed.eventReference}".` };
+  }
+
+  if (matches.length === 1) {
+    const outcome = await performEditCalendarEvent(userId, matches[0].id, matches[0], parsed);
+    return { status: outcome.success ? "auto_executed" : "rejected", message: outcome.message };
+  }
+
+  return {
+    status: "pending",
+    message: `A few events match "${parsed.eventReference}" — which one do you want to edit?`,
+    disambiguationOptions: matches.map((event) => ({ id: event.id, label: `Edit "${formatEventLabel(event)}"` })),
+  };
+}
+
 /**
  * Entry point for a freshly-typed command: parse → classify →
  * execute-if-possible → log. Every branch ends in a `commands_log` row, so
@@ -167,6 +297,7 @@ export async function runCommand(userId: string, text: string, timeZone: string,
     };
   }
 
+  const today = todayInTimeZone(timeZone);
   const { parsed, quotaExceeded } = await parseCommand(text, nowLocalNaiveIso(timeZone), timeZone, conversationContext);
 
   if (!parsed) {
@@ -211,8 +342,36 @@ export async function runCommand(userId: string, text: string, timeZone: string,
     };
   }
 
-  // delete_reminder
-  const result = await handleDeleteReminder(userId, parsed);
+  if (parsed.intent === "delete_reminder") {
+    const result = await handleDeleteReminder(userId, parsed);
+    const commandId = await logCommand(userId, text, parsed, result.status);
+    return {
+      commandId,
+      status: result.status,
+      message: result.message,
+      disambiguation: result.disambiguationOptions ? { options: result.disambiguationOptions } : undefined,
+    };
+  }
+
+  if (parsed.intent === "create_calendar_event") {
+    const result = await handleCreateCalendarEvent(userId, parsed, today);
+    const commandId = await logCommand(userId, text, parsed, result.status);
+    return { commandId, status: result.status, message: result.message };
+  }
+
+  if (parsed.intent === "edit_calendar_event") {
+    const result = await handleEditCalendarEvent(userId, parsed, today);
+    const commandId = await logCommand(userId, text, parsed, result.status);
+    return {
+      commandId,
+      status: result.status,
+      message: result.message,
+      disambiguation: result.disambiguationOptions ? { options: result.disambiguationOptions } : undefined,
+    };
+  }
+
+  // delete_calendar_event
+  const result = await handleDeleteCalendarEvent(userId, parsed, today);
   const commandId = await logCommand(userId, text, parsed, result.status);
   return {
     commandId,
@@ -241,6 +400,22 @@ export async function resolveCommand(
   }
 
   const parsed = row.parsedCommand;
+
+  if (parsed.intent === "delete_calendar_event" || parsed.intent === "edit_calendar_event") {
+    const events = await listUpcomingEvents(userId, todayInTimeZone(timeZone));
+    const selected = events.find((event) => event.id === selectedEventId);
+    if (!selected) {
+      await updateCommandStatus(commandId, "rejected");
+      return { commandId, status: "rejected", message: "That event couldn't be found anymore." };
+    }
+
+    const outcome =
+      parsed.intent === "delete_calendar_event"
+        ? await performDeleteCalendarEvent(userId, selected.id, selected.title)
+        : await performEditCalendarEvent(userId, selected.id, selected, parsed);
+    await updateCommandStatus(commandId, outcome.success ? "confirmed" : "rejected");
+    return { commandId, status: outcome.success ? "confirmed" : "rejected", message: outcome.message };
+  }
 
   const reminders = await listOpenReminders(userId);
   const selected = reminders.find((reminder) => reminder.id === selectedEventId);

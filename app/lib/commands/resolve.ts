@@ -1,4 +1,6 @@
 import type { Reminder } from "@/app/lib/commands/reminders";
+import { formatEventDateLabel, formatEventTime } from "@/app/lib/calendar/format";
+import type { CalendarEvent } from "@/app/lib/calendar/types";
 
 /**
  * Converts a naive local wall-clock instant (Gemini's "YYYY-MM-DD" or
@@ -71,4 +73,22 @@ export function matchRemindersByReference(reminders: Reminder[], reference: stri
     const haystack = reminder.text.toLowerCase();
     return keywords.some((keyword) => haystack.includes(keyword));
   });
+}
+
+/** Same fuzzy keyword-substring approach as matchRemindersByReference, applied to calendar events' titles instead of reminder text. */
+export function matchEventsByReference(events: CalendarEvent[], reference: string): CalendarEvent[] {
+  const keywords = referenceKeywords(reference);
+  if (keywords.length === 0) return [];
+  return events.filter((event) => {
+    const haystack = event.title.toLowerCase();
+    return keywords.some((keyword) => haystack.includes(keyword));
+  });
+}
+
+/** "Lunch — Sunday, August 16, 12:00 PM" style label for a disambiguation picker row. */
+export function formatEventLabel(event: CalendarEvent): string {
+  const when = event.allDay
+    ? formatEventDateLabel(event.eventDate)
+    : `${formatEventDateLabel(event.eventDate)}${event.startTime ? `, ${formatEventTime(event.startTime)}` : ""}`;
+  return `${event.title} — ${when}`;
 }

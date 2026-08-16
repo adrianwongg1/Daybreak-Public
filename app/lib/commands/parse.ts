@@ -13,6 +13,9 @@ const VALID_INTENTS: CommandIntent[] = [
   "create_reminder",
   "edit_reminder",
   "delete_reminder",
+  "create_calendar_event",
+  "edit_calendar_event",
+  "delete_calendar_event",
   "send_email",
   "draft_email",
   "unknown",
@@ -26,6 +29,18 @@ interface GeminiParsedCommand {
   reminderReference: string | null;
   newReminderText: string | null;
   newReminderAt: string | null;
+  eventTitle: string | null;
+  eventDate: string | null;
+  eventStartTime: string | null;
+  eventEndTime: string | null;
+  eventAllDay: boolean | null;
+  eventLocation: string | null;
+  eventReference: string | null;
+  newEventTitle: string | null;
+  newEventDate: string | null;
+  newEventStartTime: string | null;
+  newEventEndTime: string | null;
+  newEventLocation: string | null;
 }
 
 function buildSystemInstructions(nowLocalIso: string, timeZone: string): string {
@@ -34,9 +49,12 @@ function buildSystemInstructions(nowLocalIso: string, timeZone: string): string 
     `The user's current local date/time is ${nowLocalIso} in the ${timeZone} timezone — resolve every relative ` +
     `date/time ("tomorrow", "next Tuesday", "3pm", "this week") against that instant, not UTC "now".\n\n` +
     `Classify "intent" as exactly one of:\n` +
-    `- create_reminder: wants to be reminded of something, or add a personal to-do.\n` +
+    `- create_reminder: a personal to-do/note with no meaningful duration — at most one point in time, e.g. "remind me to call the dentist" or "remind me to submit the report by 5pm".\n` +
     `- edit_reminder: wants to change an existing reminder's text and/or time.\n` +
     `- delete_reminder: wants to cancel/delete an existing reminder.\n` +
+    `- create_calendar_event: describes something scheduled on the calendar rather than a bare to-do — prefer this whenever a start AND end time (a duration/time range) is given, or the request uses event-like framing (meeting, appointment, lunch, dinner, call with someone, trip, flight, "block off", "schedule"), even without an explicit end time. Example: "add lunch for 12pm-2pm" is create_calendar_event (a time range), not create_reminder.\n` +
+    `- edit_calendar_event: wants to change an existing calendar event's title, date, time, or location.\n` +
+    `- delete_calendar_event: wants to cancel/delete an existing calendar event.\n` +
     `- send_email: wants an email sent to someone.\n` +
     `- draft_email: wants an email drafted, not sent.\n` +
     `- unknown: doesn't fit any of the above, or is too vague to classify.\n\n` +
@@ -46,9 +64,20 @@ function buildSystemInstructions(nowLocalIso: string, timeZone: string): string 
     `- reminderAt: for create_reminder, the local instant "YYYY-MM-DDTHH:mm" if the user gave one, else null.\n` +
     `- reminderReference: for edit_reminder/delete_reminder, free text identifying which existing reminder the user means, e.g. "dentist reminder" or "call mom".\n` +
     `- newReminderText: for edit_reminder, the reminder's new content if the user is changing what it says, else null.\n` +
-    `- newReminderAt: for edit_reminder, the new local instant "YYYY-MM-DDTHH:mm" if the user is changing when it fires, else null.\n\n` +
+    `- newReminderAt: for edit_reminder, the new local instant "YYYY-MM-DDTHH:mm" if the user is changing when it fires, else null.\n` +
+    `- eventTitle: for create_calendar_event, a short title for the event, e.g. "Lunch" or "Dentist appointment".\n` +
+    `- eventDate: for create_calendar_event, the local calendar date "YYYY-MM-DD" the event is on — default to today's date if the user didn't say one.\n` +
+    `- eventStartTime: for create_calendar_event, local "HH:mm" (24-hour) start time if given, else null.\n` +
+    `- eventEndTime: for create_calendar_event, local "HH:mm" (24-hour) end time if given, else null.\n` +
+    `- eventAllDay: for create_calendar_event, true only if the user explicitly described it as all-day with no specific time, else null.\n` +
+    `- eventLocation: for create_calendar_event, a location if one was given, else null.\n` +
+    `- eventReference: for edit_calendar_event/delete_calendar_event, free text identifying which existing event the user means, e.g. "lunch event" or "dentist appointment".\n` +
+    `- newEventTitle/newEventDate/newEventStartTime/newEventEndTime/newEventLocation: for edit_calendar_event, whichever of the event's fields the user is changing (same formats as above), else null.\n\n` +
     `Respond with ONLY a JSON object of the exact shape {"intent": string, "summary": string, "reminderText": string|null, ` +
-    `"reminderAt": string|null, "reminderReference": string|null, "newReminderText": string|null, "newReminderAt": string|null} — ` +
+    `"reminderAt": string|null, "reminderReference": string|null, "newReminderText": string|null, "newReminderAt": string|null, ` +
+    `"eventTitle": string|null, "eventDate": string|null, "eventStartTime": string|null, "eventEndTime": string|null, ` +
+    `"eventAllDay": boolean|null, "eventLocation": string|null, "eventReference": string|null, "newEventTitle": string|null, ` +
+    `"newEventDate": string|null, "newEventStartTime": string|null, "newEventEndTime": string|null, "newEventLocation": string|null} — ` +
     `no markdown fences, no other text.`
   );
 }
@@ -190,6 +219,18 @@ export async function parseCommand(
         reminderReference: parsed.reminderReference ?? undefined,
         newReminderText: parsed.newReminderText ?? undefined,
         newReminderAt: parsed.newReminderAt ?? undefined,
+        eventTitle: parsed.eventTitle ?? undefined,
+        eventDate: parsed.eventDate ?? undefined,
+        eventStartTime: parsed.eventStartTime ?? undefined,
+        eventEndTime: parsed.eventEndTime ?? undefined,
+        eventAllDay: parsed.eventAllDay ?? undefined,
+        eventLocation: parsed.eventLocation ?? undefined,
+        eventReference: parsed.eventReference ?? undefined,
+        newEventTitle: parsed.newEventTitle ?? undefined,
+        newEventDate: parsed.newEventDate ?? undefined,
+        newEventStartTime: parsed.newEventStartTime ?? undefined,
+        newEventEndTime: parsed.newEventEndTime ?? undefined,
+        newEventLocation: parsed.newEventLocation ?? undefined,
       },
       quotaExceeded: false,
     };

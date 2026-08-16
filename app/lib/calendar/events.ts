@@ -61,6 +61,20 @@ export async function listEventsForDate(userId: string, date: string): Promise<C
   return (data ?? []).map(toCalendarEvent);
 }
 
+/** Backs the command bar's edit/delete-by-reference matching ("delete my lunch event") — today's and future events only, since referring to a past event by voice/text isn't a realistic use case reminders' equivalent (open-only) doesn't have to consider either. */
+export async function listUpcomingEvents(userId: string, today: string): Promise<CalendarEvent[]> {
+  const supabase = getSupabaseServiceClient();
+  const { data } = await supabase
+    .from("calendar_events")
+    .select(EVENT_COLUMNS)
+    .eq("user_id", userId)
+    .gte("event_date", today)
+    .order("event_date", { ascending: true })
+    .order("all_day", { ascending: false })
+    .order("start_time", { ascending: true, nullsFirst: false });
+  return (data ?? []).map(toCalendarEvent);
+}
+
 /** Backs the Calendar page's month grid — one query per visible month. */
 export async function listEventsInRange(userId: string, startDate: string, endDate: string): Promise<CalendarEvent[]> {
   const supabase = getSupabaseServiceClient();
