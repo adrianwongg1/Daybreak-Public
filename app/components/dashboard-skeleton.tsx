@@ -3,22 +3,15 @@ function Shimmer({ className }: { className: string }) {
 }
 
 /**
- * A structural stand-in for the Today page. It contains no user data or API
- * work, so it can stream immediately while the server resolves the session
- * and stored briefing.
+ * Everything below the Today header: the command bar shell and the
+ * reminders/calendar/weather/markets/news sections. Used both as the nested
+ * fallback while the dashboard view model streams in and inside the
+ * full-page DashboardSkeleton.
  */
-export function DashboardSkeleton() {
+export function TodayBodySkeleton() {
   return (
-    <div role="status" aria-live="polite" className="mx-auto max-w-5xl">
+    <div role="status" aria-live="polite">
       <span className="sr-only">Loading your briefing</span>
-
-      <header className="mb-5 border-b border-(--color-divider) pb-4 sm:mb-6 sm:pb-5">
-        <h6 className="mb-3 text-(--color-accent-700)">Your daily briefing</h6>
-        <h1 className="max-w-2xl text-(--color-text)">Good day.</h1>
-        <p className="mt-3 max-w-xl text-sm text-[color-mix(in_srgb,var(--color-text)_60%,transparent)] sm:text-base">
-          Your considered briefing for the day ahead.
-        </p>
-      </header>
 
       <section className="rounded-(--radius-lg) border border-(--color-divider) bg-(--color-surface) p-5 sm:p-6">
         <label className="block text-[11px] uppercase tracking-[0.08em] text-[color-mix(in_srgb,var(--color-text)_60%,transparent)]">Chat with Daybreak</label>
@@ -96,6 +89,23 @@ export function DashboardSkeleton() {
           <Shimmer className="h-16 w-11/12 rounded-(--radius-md)" />
         </div>
       </section>
+    </div>
+  );
+}
+
+/** Full-page fallback for today/loading.tsx — the header itself needs data too on a hard load/refresh, so it stays shimmered here. */
+export function DashboardSkeleton() {
+  return (
+    <div className="mx-auto max-w-5xl">
+      <header className="mb-5 border-b border-(--color-divider) pb-4 sm:mb-6 sm:pb-5">
+        <h6 className="mb-3 text-(--color-accent-700)">Your daily briefing</h6>
+        <h1 className="max-w-2xl text-(--color-text)">Good day.</h1>
+        <p className="mt-3 max-w-xl text-sm text-[color-mix(in_srgb,var(--color-text)_60%,transparent)] sm:text-base">
+          Your considered briefing for the day ahead.
+        </p>
+      </header>
+
+      <TodayBodySkeleton />
     </div>
   );
 }

@@ -49,18 +49,19 @@ function toBriefing(data: {
 /**
  * The sole server-side read model for Today. It intentionally reads only
  * durable application data; no provider client may be imported here.
+ *
+ * `timezone`/`homeLocation` come from the caller's `requireCompletedSession()`
+ * result rather than being re-queried here, since that call already read the
+ * same `users` row for the auth/onboarding gate.
  */
-export async function getTodayDashboardViewModel(userId: string): Promise<TodayDashboardViewModel> {
+export async function getTodayDashboardViewModel(
+  userId: string,
+  timezone: string,
+  homeLocation: string | null
+): Promise<TodayDashboardViewModel> {
   const supabase = getSupabaseServiceClient();
   const dashboardStartedAt = performance.now();
-  const { data: user, error: userError } = await supabase
-    .from("users")
-    .select("timezone, home_location")
-    .eq("id", userId)
-    .single();
-  if (userError || !user) throw new Error("Failed to load Today dashboard profile");
-
-  const today = todayInTimeZone(user.timezone);
+  const today = todayInTimeZone(timezone);
   const briefingStartedAt = performance.now();
   const [preferencesResult, reminders, calendarEvents, briefingResult] = await Promise.all([
     supabase
@@ -114,9 +115,9 @@ export async function getTodayDashboardViewModel(userId: string): Promise<TodayD
     : null;
 
   return {
-    timezone: user.timezone,
+    timezone,
     today,
-    homeLocation: user.home_location,
+    homeLocation,
     sectionOrder: parseSectionOrder(preferences?.section_order),
     marketTickers,
     commandSuggestions: commandSuggestionsForDisplay(preferences?.command_suggestions),

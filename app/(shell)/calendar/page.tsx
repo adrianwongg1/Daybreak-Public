@@ -1,8 +1,9 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { CalendarGrid } from "@/app/(shell)/calendar/calendar-grid";
+import { CalendarGridSkeleton } from "@/app/components/calendar-skeleton";
 import { ChevronLeftIcon, ChevronRightIcon } from "@/app/components/icons";
 import { EARLIEST_APP_DATE, todayInTimeZone } from "@/app/lib/briefing/date";
-import { getUserTimezone } from "@/app/lib/briefing/read";
 import { listEventsInRange } from "@/app/lib/calendar/events";
 import { formatMonthLabel, getAdjacentMonthKey, getMonthBounds, isValidMonthKey } from "@/app/lib/calendar/month";
 import { requireCompletedSession } from "@/app/lib/auth/require-completed-session";
@@ -10,8 +11,7 @@ import { requireCompletedSession } from "@/app/lib/auth/require-completed-sessio
 const EARLIEST_MONTH_KEY = EARLIEST_APP_DATE.slice(0, 7);
 
 export default async function CalendarPage({ searchParams }: { searchParams: Promise<{ month?: string }> }) {
-  const { userId } = await requireCompletedSession();
-  const timezone = await getUserTimezone(userId);
+  const { userId, timezone } = await requireCompletedSession();
   // The visible month defaults off the user's own configured timezone, not
   // the server's UTC clock -- a PST user at 9pm Jan 31 is still in January
   // locally but already Feb 1 UTC, and a naive server-clock default would
@@ -22,7 +22,6 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
   const monthKey = month && isValidMonthKey(month) ? month : today.slice(0, 7);
 
   const { start, end } = getMonthBounds(monthKey);
-  const events = await listEventsInRange(userId, start, end);
 
   const prevMonthKey = getAdjacentMonthKey(monthKey, -1);
   const nextMonthKey = getAdjacentMonthKey(monthKey, 1);
@@ -48,7 +47,26 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
         </Link>
       </header>
 
-      <CalendarGrid monthKey={monthKey} today={today} events={events} />
+      <Suspense key={monthKey} fallback={<CalendarGridSkeleton />}>
+        <CalendarEvents userId={userId} monthKey={monthKey} today={today} start={start} end={end} />
+      </Suspense>
     </div>
   );
+}
+
+async function CalendarEvents({
+  userId,
+  monthKey,
+  today,
+  start,
+  end,
+}: {
+  userId: string;
+  monthKey: string;
+  today: string;
+  start: string;
+  end: string;
+}) {
+  const events = await listEventsInRange(userId, start, end);
+  return <CalendarGrid monthKey={monthKey} today={today} events={events} />;
 }
