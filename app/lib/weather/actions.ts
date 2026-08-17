@@ -20,9 +20,14 @@ export interface WeatherRefreshResult {
   savedCities: { displayName: string; weather: WeatherInfo }[] | null;
 }
 
-/** Refreshes only the Weather section after the page has rendered. */
-export async function refreshWeatherAction(): Promise<WeatherRefreshResult> {
-  const userId = await getCurrentUserId();
+/**
+ * Refreshes one user's weather + outfit + saved cities and writes the
+ * result into today's stored briefing. Shared by the hourly weather cron
+ * (`app/lib/weather/cron.ts`, looping over every user) — parameterized by
+ * `userId` rather than reading the current session so it works outside a
+ * request context.
+ */
+export async function refreshWeatherForUser(userId: string): Promise<WeatherRefreshResult> {
   const supabase = getSupabaseServiceClient();
   const [{ data: user, error: userError }, { data: preferences, error: preferencesError }] = await Promise.all([
     supabase.from("users").select("home_location, timezone").eq("id", userId).single(),

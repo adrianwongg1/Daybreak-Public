@@ -13,6 +13,7 @@ import {
 import { UnavailableNote } from "@/app/components/unavailable-note";
 import { refreshMarketsAction, setMarketTickerOrderAction } from "@/app/lib/markets/actions";
 import { backgroundSectionRefreshEnabled } from "@/app/lib/feature-flags";
+import { shouldRunBackgroundRefresh } from "@/app/lib/today/section-refresh-cooldown";
 import type { MarketQuote } from "@/app/lib/briefing/types";
 
 function changeColor(changePct: number): string {
@@ -213,6 +214,10 @@ export function MarketSection({
     // Runs after the initial stored-data render. The provider cache keeps
     // this inexpensive until quotes are stale; users never wait on it.
     if (!backgroundSectionRefreshEnabled) return;
+    // Today remounts this section on every navigation back to it (e.g.
+    // switching away to Calendar and back) — without this, every single
+    // remount would re-trigger a live provider refresh + router.refresh().
+    if (!shouldRunBackgroundRefresh("markets")) return;
     // router.refresh() targets whichever page is current when it fires, not
     // necessarily this one — skip it if the user has already navigated away
     // while the refresh was still in flight, otherwise it refreshes the

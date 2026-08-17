@@ -11,6 +11,33 @@ import { isCacheFresh } from "@/app/lib/cache/freshness";
 // that symbol in the meantime (any user) reuses the cached row instead.
 const QUOTE_CACHE_FRESHNESS_MS = 5 * 60 * 1000;
 
+const MARKET_TIME_ZONE = "America/New_York";
+const MARKET_OPEN_MINUTES = 9 * 60 + 30; // 09:30
+const MARKET_CLOSE_MINUTES = 16 * 60; // 16:00
+
+/**
+ * NYSE/Nasdaq regular trading hours — Mon-Fri 09:30-16:00 America/New_York.
+ * No holiday calendar (this codebase has no holiday data source): a market
+ * holiday is treated as a normal trading day, which just risks an
+ * occasional unneeded live quote call, not a correctness problem.
+ */
+export function isUsEquityMarketOpen(now: Date = new Date()): boolean {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: MARKET_TIME_ZONE,
+    weekday: "short",
+    hourCycle: "h23",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).formatToParts(now);
+  const weekday = parts.find((p) => p.type === "weekday")?.value ?? "";
+  if (weekday === "Sat" || weekday === "Sun") return false;
+
+  const hour = Number(parts.find((p) => p.type === "hour")?.value ?? "0");
+  const minute = Number(parts.find((p) => p.type === "minute")?.value ?? "0");
+  const minutesSinceMidnight = hour * 60 + minute;
+  return minutesSinceMidnight >= MARKET_OPEN_MINUTES && minutesSinceMidnight < MARKET_CLOSE_MINUTES;
+}
+
 // None of this file's fetches had a timeout — a slow/hanging Finnhub or
 // CoinGecko response could block the whole Today page indefinitely (see the
 // news.ts rss-parser default-60s-timeout incident this fixed the same day).
@@ -229,7 +256,14 @@ export async function fetchMarketSummary(tickers: string[]): Promise<MarketQuote
     ])
   );
 
-  const staleTickers = tickers.filter((ticker) => !freshBySymbol.has(ticker));
+  // Equities only get a live call during real trading hours — outside
+  // that window they fall through to staleBySymbol below, same as a
+  // provider failure. Crypto trades 24/7, so it's exempt from this gate
+  // and stays bounded by the freshness window alone.
+  const marketOpen = isUsEquityMarketOpen();
+  const staleTickers = tickers.filter(
+    (ticker) => !freshBySymbol.has(ticker) && (marketOpen || Boolean(CRYPTO_COINGECKO_IDS[ticker]))
+  );
   const results = await Promise.allSettled(staleTickers.map((ticker) =>
     withProviderFallback(
       CRYPTO_COINGECKO_IDS[ticker] ? "coingecko" : "finnhub",

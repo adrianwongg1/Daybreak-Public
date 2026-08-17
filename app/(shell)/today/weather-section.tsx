@@ -5,8 +5,7 @@ import { useEffect, useState, useTransition } from "react";
 import { CityWeatherSearch } from "@/app/(shell)/today/city-weather-search";
 import { WeatherCard } from "@/app/(shell)/today/weather-card";
 import { UnavailableNote } from "@/app/components/unavailable-note";
-import { refreshWeatherAction, removeSavedCityAction } from "@/app/lib/weather/actions";
-import { backgroundSectionRefreshEnabled } from "@/app/lib/feature-flags";
+import { removeSavedCityAction } from "@/app/lib/weather/actions";
 import type { OutfitSuggestion, WeatherInfo } from "@/app/lib/briefing/types";
 
 // Today page's Weather section — "Weather" as the section header, with the
@@ -58,27 +57,6 @@ export function WeatherSection({
       router.refresh();
     });
   }
-
-  useEffect(() => {
-    // Refresh only after the stored dashboard responds; Phase 4's cache
-    // avoids a provider call until the forecast becomes stale.
-    if (!backgroundSectionRefreshEnabled) return;
-    // router.refresh() targets whichever page is current when it fires, not
-    // necessarily this one — skip it if the user has already navigated away
-    // while the refresh was still in flight, otherwise it refreshes the
-    // wrong page and collides with whatever the user clicked next.
-    let cancelled = false;
-    startTransition(async () => {
-      try {
-        await refreshWeatherAction();
-        if (!cancelled) router.refresh();
-      } catch { /* retain the saved weather cards during a background failure */ }
-    });
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once per mount, like the effect it replaces
-  }, []);
 
   return (
     <section id={id}>
