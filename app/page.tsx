@@ -1,14 +1,15 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { createClient } from "@/app/lib/supabase/auth-server";
-import { requireCompletedSession } from "@/app/lib/auth/require-completed-session";
+import { getSessionUser, requireCompletedSession } from "@/app/lib/auth/require-completed-session";
 
 // Signed-in people still land directly in their personal workspace. Everyone
 // else gets a public introduction and can explore the privacy-safe demo
 // with no account required.
 export default async function RootPage() {
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getUser();
+  // getSessionUser() is cache()'d, so this and the getUser() inside
+  // requireCompletedSession() below share one Supabase Auth round trip
+  // instead of two.
+  const { data } = await getSessionUser();
   if (data.user) {
     await requireCompletedSession();
     redirect("/today");

@@ -6,6 +6,16 @@ import { getSupabaseServiceClient } from "@/app/lib/supabase/server";
 import type { OnboardingStepId } from "@/app/lib/preferences/types";
 
 /**
+ * Wrapped in React's `cache()` so every caller in a request — the root page's
+ * signed-in check, requireCompletedSession() below, the shell nav — shares
+ * one Supabase Auth round trip instead of each paying for their own.
+ */
+export const getSessionUser = cache(async function getSessionUser() {
+  const supabase = await createClient();
+  return supabase.auth.getUser();
+});
+
+/**
  * Enforces the shell's original authentication and onboarding boundary from
  * a page (or a suspended shell component), without making the layout itself
  * wait before it can stream a loading skeleton.
@@ -14,8 +24,7 @@ import type { OnboardingStepId } from "@/app/lib/preferences/types";
  * one Auth + DB round trip per request instead of each paying for their own.
  */
 export const requireCompletedSession = cache(async function requireCompletedSession() {
-  const supabase = await createClient();
-  const { data, error } = await supabase.auth.getUser();
+  const { data, error } = await getSessionUser();
   if (error || !data.user) redirect("/login");
 
   const userId = data.user.id;
