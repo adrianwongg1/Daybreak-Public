@@ -1,5 +1,7 @@
 # Daybreak (Daily Brief Web)
 
+# https://daybreak-public.netlify.app/
+
 An AI-powered personal daily-briefing web app — news, markets, and weather summarized every morning, plus typed natural-language commands for quick actions. This is a public fork with no Google integration: accounts are created and signed in via Supabase Auth (email/password, with email confirmation on sign-up) rather than Auth.js/Google OAuth, and there's no Calendar section. See `DECISIONS.md` for the up-to-date running log of what's actually been built.
 
 ## Tech stack
